@@ -135,7 +135,12 @@ int MPI_File_open(MPI_Comm comm, ROMIO_CONST char *filename, int amode,
 	 * possibly can or call MPIO_Err_setmsg.  We just need to propagate 
 	 * the error up.
 	 */
+        ROMIO_LOG_INT(file_system, AD_LOG_LEVEL_ERR);
+        ROMIO_LOG_INT(error_code, AD_LOG_LEVEL_ERR);
 	goto fn_fail;
+    } else {
+        ROMIO_LOG_INT(file_system, AD_LOG_LEVEL_ALL);
+        ROMIO_LOG_INT(error_code, AD_LOG_LEVEL_ALL);
     }
 
     /* --END ERROR HANDLING-- */
