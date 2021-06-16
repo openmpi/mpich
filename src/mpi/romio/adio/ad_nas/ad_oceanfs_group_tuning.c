@@ -3,7 +3,6 @@
 #include "ad_oceanfs_file.h"
 #include "ad_env.h"
 #include "mpi.h"
-#include "securec.h"
 
 
 #define GROUP_TUNING_SIZE 4
@@ -28,9 +27,7 @@ void ad_oceanfs_group_report(ADIO_File fd, uint64_t group_id)
 
     static int g_dir_len = 128;
     char pname[g_dir_len];
-    if (snprintf_s(pname, sizeof(pname), sizeof(pname), "/mpi_state/group%d", getpid()) < 0) {
-        ROMIO_LOG(AD_LOG_LEVEL_ERR, "snprintf_s error!");
-    }
+    snprintf(pname, sizeof(pname), "/mpi_state/group%d", getpid());
 
     TAdOceanfsFile *nas_file = ad_oceanfs_file_init(pname, FILE_CREATE_INTIME, g_row_cnt, g_col_cnt, g_col_len,
         g_head_row, g_head_row_size, g_head_col, g_head_col_size);

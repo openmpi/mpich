@@ -9,7 +9,6 @@
 #include <sys/ioctl.h>
 #include "ad_oceanfs_pub.h"
 #include "adio.h"
-#include "securec.h"
 
 
 #ifdef DEBUG
@@ -28,7 +27,7 @@ void* mpi_zalloc(uint32_t n)
     if (p == NULL) {
         return NULL;
     }
-    memset_s(p, n, 0, n);
+    memset(p, 0, n);
     return p;
 }
 
@@ -400,7 +399,6 @@ static mpi_fh_handle_t *mpi_fh_get(int fd)
 
 int mpi_fs_set_fileview(int fd, off_t offset, u32 count, u32 *blocklens, off_t *blockoffs, off_t ub_off)
 {
-    int ret = 0;
     mpi_fh_handle_t *fh = mpi_fh_get(fd);
     if (fh == NULL) {
         errno = EINVAL;
@@ -419,14 +417,8 @@ int mpi_fs_set_fileview(int fd, off_t offset, u32 count, u32 *blocklens, off_t *
     mpi_free(fh->view);
 
     fh->view = view;
-    ret = memcpy_s(fh->view->blocklens, count * sizeof(uint32_t), blocklens, count * sizeof(uint32_t));
-    if (ret != 0) {
-        ROMIO_LOG(AD_LOG_LEVEL_ALL, "memcpy error! errcode:%d", ret);
-    }
-    ret = memcpy_s(fh->view->blockoffs, count * sizeof(off_t), blockoffs, count * sizeof(off_t));
-    if (ret != 0) {
-        ROMIO_LOG(AD_LOG_LEVEL_ALL, "memcpy error! errcode:%d", ret);
-    }
+    memcpy(fh->view->blocklens, blocklens, count * sizeof(uint32_t));
+    memcpy(fh->view->blockoffs, blockoffs, count * sizeof(off_t));
 
     fh->view->offset = offset;
     fh->view->count = count;
@@ -614,11 +606,7 @@ static u32 CopyBuffToIov(const void *buff, u32 bufLen, struct iovec *iov, u32 io
     for (i = 0; i < iovLen; i++) {
         copy_len = MIN(left_len, iov[i].iov_len);
         left_len -= copy_len;
-        ret = memcpy_s(iov[i].iov_base, copy_len, (((char *)buff) + pos), copy_len);
-        if (ret != EOK) {
-            ROMIO_LOG(AD_LOG_LEVEL_ALL, "memcpy error!, errcode:%d", ret);
-        }
-
+        memcpy(iov[i].iov_base, (((char *)buff) + pos), copy_len);
         iov[i].iov_len = copy_len;
         pos += copy_len;
         if (left_len == 0) {

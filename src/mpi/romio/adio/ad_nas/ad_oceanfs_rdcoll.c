@@ -8,7 +8,6 @@
 #include "ad_oceanfs_common.h"
 #include "ad_oceanfs_pub.h"
 #include "ad_oceanfs_group_tuning.h"
-#include "securec.h"
 
 #ifdef PROFILE
 #include "mpe.h"
@@ -369,7 +368,7 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype datatype, 
        array from a file, where each local array is 8Mbytes, requiring
        at least another 8Mbytes of temp space is unacceptable. */
 
-    int i, j, m, ntimes, max_ntimes, buftype_is_contig, ret;
+    int i, j, m, ntimes, max_ntimes, buftype_is_contig;
     ADIO_Offset st_loc = -1;
     ADIO_Offset end_loc = -1;
     ADIO_Offset off, done, real_off, req_off;
@@ -568,7 +567,7 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype datatype, 
 #endif
         if (flag) {
             char round[50];
-            sprintf_s(round, sizeof(round), "two-phase-round=%d", m);
+            sprintf(round, "two-phase-round=%d", m);
             setenv("LIBIOLOG_EXTRA_INFO", round, 1);
             ADIOI_Assert(size == (int)size);
             ADIO_ReadContig(fd, read_buf + for_curr_iter, (int)size, MPI_BYTE, ADIO_EXPLICIT_OFFSET, off, &status,
@@ -604,16 +603,10 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype datatype, 
             ADIOI_Assert((((ADIO_Offset)(MPIU_Upint)read_buf) + real_size - for_next_iter) ==
                 (ADIO_Offset)(MPIU_Upint)(read_buf + real_size - for_next_iter));
             ADIOI_Assert((for_next_iter + coll_bufsize) == (size_t)(for_next_iter + coll_bufsize));
-            ret = memcpy_s(tmp_buf, for_next_iter, read_buf + real_size - for_next_iter, for_next_iter);
-            if (ret != EOK) {
-                ROMIO_LOG(AD_LOG_LEVEL_ALL, "memcpy error!, errcode:%d", ret);
-            }
+            memcpy(tmp_buf, read_buf + real_size - for_next_iter, for_next_iter);
             ADIOI_Free(fd->io_buf);
             fd->io_buf = (char *)ADIOI_Malloc(for_next_iter + coll_bufsize);
-            ret = memcpy_s(fd->io_buf, for_next_iter, tmp_buf, for_next_iter);
-            if (ret != EOK) {
-                ROMIO_LOG(AD_LOG_LEVEL_ALL, "memcpy error! errcode:%d", ret);
-            }
+            memcpy(fd->io_buf, tmp_buf, for_next_iter);
             read_buf = fd->io_buf;
             ADIOI_Free(tmp_buf);
         }
@@ -795,11 +788,7 @@ static void ADIOI_R_Exchange_data(ADIO_File fd, void *buf, ADIOI_Flatlist_node *
                 (ADIO_Offset)(MPIU_Upint)(buf + user_buf_idx));                                              \
             ADIOI_Assert(size_in_buf == (size_t)size_in_buf);                                                \
             int ret = 0;                                                                                     \
-            ret = memcpy_s(((char *)buf) + user_buf_idx, size_in_buf, &(recv_buf[p][recv_buf_idx[p]]),       \
-                size_in_buf);                                                                                \
-            if (ret != EOK) {                                                                                \
-                ROMIO_LOG(AD_LOG_LEVEL_ALL, "memcpy error!, errcode:%d", ret);                               \
-            }                                                                                                \
+            memcpy(((char *)buf) + user_buf_idx, &(recv_buf[p][recv_buf_idx[p]]), size_in_buf);              \
             recv_buf_idx[p] += size_in_buf;                                                                  \
             user_buf_idx += size_in_buf;                                                                     \
             flat_buf_sz -= size_in_buf;                                                                      \
@@ -930,7 +919,7 @@ static void ADIOI_R_Exchange_data_alltoallv(ADIO_File fd, void *buf, ADIOI_Flatl
     ADIO_Offset min_st_offset, ADIO_Offset fd_size, ADIO_Offset *fd_start, ADIO_Offset *fd_end,
     ADIOI_Access *others_req, int iter, MPI_Aint buftype_extent, OCEANFS_Int *buf_idx)
 {
-    int i, j, nprocs_recv, ret;
+    int i, j, nprocs_recv;
     int k = 0;
     int tmp = 0;
     char **recv_buf = NULL;
@@ -991,9 +980,7 @@ static void ADIOI_R_Exchange_data_alltoallv(ADIO_File fd, void *buf, ADIOI_Flatl
 #endif
                 from_ptr = (char *)ADIOI_AINT_CAST_TO_VOID_PTR(others_req[i].mem_ptrs[start_pos[i] + j]);
                 len = others_req[i].lens[start_pos[i] + j];
-                ret = memcpy_s(sbuf_ptr, len, from_ptr, len);
-                ROMIO_LOG((ret) == EOK ? AD_LOG_LEVEL_NON : AD_LOG_LEVEL_ALL,
-                    "memcpy error!, errcode:%d", ret);
+                memcpy(sbuf_ptr, from_ptr, len);
                 sbuf_ptr += len;
             }
             if (partial_send[i]) {
@@ -1015,9 +1002,7 @@ static void ADIOI_R_Exchange_data_alltoallv(ADIO_File fd, void *buf, ADIOI_Flatl
             rtail = 0;
             for (i = 0; i < nprocs; i++) {
                 if (recv_size[i]) {
-                    ret = memcpy_s((char *)buf + buf_idx[i], recv_size[i], all_recv_buf + rtail, recv_size[i]);
-                    ROMIO_LOG((ret) == EOK ? AD_LOG_LEVEL_NON : AD_LOG_LEVEL_ALL,
-                        "memcpy error!, errcode:%d", ret);
+                    memcpy((char *)buf + buf_idx[i], all_recv_buf + rtail, recv_size[i]);
                     buf_idx[i] += recv_size[i];
                     rtail += recv_size[i];
                 }

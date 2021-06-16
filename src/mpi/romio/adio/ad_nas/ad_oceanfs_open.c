@@ -1,12 +1,10 @@
 #include <string.h>
 #include "ad_env.h"
-#include "ad_oceanfs_llt.h"
 #include "ad_oceanfs.h"
 #include "ad_oceanfs_common.h"
 #include "ad_oceanfs_pub.h"
 #include "ad_oceanfs_tuning.h"
 #include "ad_oceanfs_group_tuning.h"
-#include "securec.h"
 
 int ad_open_GetMode(ADIO_File fd)
 {
@@ -117,37 +115,11 @@ static void AllocFS(ADIO_File fd, int *error_code)
         ADIOI_Free(nas_fs);
         return;
     }
-    memset_s(nas_fs->context, sizeof(MPI_CONTEXT_T), 0, sizeof(MPI_CONTEXT_T));
+    memset(nas_fs->context, 0, sizeof(MPI_CONTEXT_T));
 
     fd->fs_ptr = nas_fs;
     *error_code = MPI_SUCCESS;
 }
-#ifdef MPI_LLT_ENABLE
-static void RunLlt()
-{
-    int total = 0;
-    int success = 0;
-    ROMIO_LOG(AD_LOG_LEVEL_NON, "LLT All Start");
-    llt_pub(&total, &success);
-    llt_viewio_1(&total, &success);
-    llt_viewio_2(&total, &success);
-    llt_fcntl(&total, &success);
-    llt_group_report(&total, &success);
-    llt_aggrs(&total, &success);
-    llt_aggrs_1(&total, &success);
-    llt_aggrs_2(&total, &success);
-    llt_aggrs_3(&total, &success);
-    llt_aggrs_4(&total, &success);
-    llt_resize(&total, &success);
-    llt_fs(&total, &success);
-    llt_file(&total, &success);
-    llt_wrcoll(&total, &success);
-    llt_view(&total, &success);
-    llt_open(&total, &success);
-
-    ROMIO_LOG(AD_LOG_LEVEL_NON, "LLT All End");
-}
-#endif
 
 void ADIOI_OCEANFS_Open(ADIO_File fd, int *error_code)
 {
@@ -164,14 +136,6 @@ void ADIOI_OCEANFS_Open(ADIO_File fd, int *error_code)
 
     /* set internal variables for tuning environment variables */
     ad_oceanfs_get_env_vars();
-
-#ifdef MPI_LLT_ENABLE
-    if (strcmp(fd->filename, "/llt/llt") == 0) {
-        RunLlt();
-        *error_code = MPI_SUCCESS;
-        return;
-    }
-#endif
 
     /* setup file permissions */
     perm = SetupFilePerm(fd);

@@ -1,6 +1,5 @@
 #include "ad_oceanfs_file.h"
 #include <unistd.h>
-#include "securec.h"
 
 #define FILE_VALUE_MAX_LEN  128
 #define ONE_DIR_LEN         256
@@ -197,13 +196,9 @@ int ad_oceanfs_file_set_double(TAdOceanfsFile *nas_file, int row, int col, doubl
     }
 
     char ps_format[FILE_VALUE_MAX_LEN];
-    if (snprintf_s(ps_format, sizeof(ps_format), sizeof(ps_format), "%c-%d.6lf", '%', nas_file->col_len) < 0) {
-        ROMIO_LOG(AD_LOG_LEVEL_ERR, "snprintf_s error!");
-    }
+    snprintf(ps_format, sizeof(ps_format), "%c-%d.6lf", '%', nas_file->col_len);
     char ps_val[FILE_VALUE_MAX_LEN];
-    if (snprintf_s(ps_val, sizeof(ps_val), sizeof(ps_val), ps_format, val) < 0) {
-        ROMIO_LOG(AD_LOG_LEVEL_ERR, "snprintf_s error!");
-    }
+    snprintf(ps_val, sizeof(ps_val), ps_format, val);
     ad_oceanfs_file_set(nas_file, row, col, ps_val);
     return 0;
 }
@@ -215,9 +210,7 @@ int ad_oceanfs_file_set_llu(TAdOceanfsFile *nas_file, int row, int col, unsigned
     }
 
     char ps[FILE_VALUE_MAX_LEN];
-    if (snprintf_s(ps, sizeof(ps), sizeof(ps), "%llu", val) < 0) {
-        ROMIO_LOG(AD_LOG_LEVEL_ERR, "snprintf_s error!");
-    }
+    snprintf(ps, sizeof(ps), "%llu", val);
     ad_oceanfs_file_set(nas_file, row, col, ps);
     return 0;
 }
@@ -229,9 +222,7 @@ int ad_oceanfs_file_set_int(TAdOceanfsFile *nas_file, int row, int col, int val)
     }
 
     char ps[FILE_VALUE_MAX_LEN];
-    if (snprintf_s(ps, sizeof(ps), sizeof(ps), "%d", val) < 0) {
-        ROMIO_LOG(AD_LOG_LEVEL_ERR, "snprintf_s error!");
-    }
+    snprintf(ps, sizeof(ps), "%d", val);
     ad_oceanfs_file_set(nas_file, row, col, ps);
     return 0;
 }

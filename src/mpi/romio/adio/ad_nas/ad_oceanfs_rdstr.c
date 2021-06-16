@@ -3,7 +3,6 @@
 #include "adio_extern.h"
 #include "ad_oceanfs.h"
 #include "ad_oceanfs_pub.h"
-#include "securec.h"
 
 static int ADIOI_OCEANFS_ReadStridedView(ADIO_File fd, void *buf, int count, MPI_Datatype datatype, int file_ptr_type,
     ADIO_Offset offset, ADIO_Status *status, int *error_code)

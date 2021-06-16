@@ -10,7 +10,6 @@
 #include "ad_oceanfs_common.h"
 #include "ad_oceanfs_pub.h"
 #include "ad_oceanfs_group_tuning.h"
-#include "securec.h"
 
 #ifdef AGGREGATION_PROFILE
 #include "mpe.h"
@@ -655,7 +654,7 @@ static void ADIOI_Exch_and_write(ADIO_File fd, const void *buf, MPI_Datatype dat
 
         if (flag) {
             char round[50];
-            sprintf_s(round,  sizeof(round), "two-phase-round=%d", m);
+            sprintf(round, "two-phase-round=%d", m);
             setenv("LIBIOLOG_EXTRA_INFO", round, 1);
             ADIOI_Assert(size == (int)size);
             if (get_nasmpio_pthreadio() == 1) {
@@ -972,12 +971,7 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, const void *buf, char *write_buf
             ADIOI_Assert((((ADIO_Offset)(MPIU_Upint)buf) + user_buf_idx) ==                                  \
                 (ADIO_Offset)(MPIU_Upint)((MPIU_Upint)buf + user_buf_idx));                                  \
             ADIOI_Assert(size_in_buf == (size_t)size_in_buf);                                                \
-            int ret = 0;                                                                                     \
-            ret = memcpy_s(&(send_buf[p][send_buf_idx[p]]), size_in_buf, ((char *)buf) + user_buf_idx,       \
-                size_in_buf);                                                                                \
-            if (ret != EOK) {                                                                                \
-                ROMIO_LOG(AD_LOG_LEVEL_ALL, "memcpy error! errcode: %d", ret);                               \
-            }                                                                                                \
+            memcpy(&(send_buf[p][send_buf_idx[p]]), ((char *)buf) + user_buf_idx, size_in_buf);              \
             send_buf_idx[p] += size_in_buf;                                                                  \
             user_buf_idx += size_in_buf;                                                                     \
             flat_buf_sz -= size_in_buf;                                                                      \
@@ -1161,7 +1155,7 @@ static void ADIOI_W_Exchange_data_alltoallv(ADIO_File fd, const void *buf, char 
     int iter, MPI_Aint buftype_extent, OCEANFS_Int *buf_idx, int *error_code)
 {
     int i, j, nprocs_recv, err;
-    int k, ret;
+    int k;
     int *tmp_len = NULL;
     char **send_buf = NULL;
     MPI_Request *send_req = NULL;
@@ -1211,10 +1205,7 @@ static void ADIOI_W_Exchange_data_alltoallv(ADIO_File fd, const void *buf, char 
                 continue;
             }
             sbuf_ptr = all_send_buf + sdispls[i];
-            ret = memcpy_s(sbuf_ptr, send_size[i], buf + buf_idx[i], send_size[i]);
-            if (ret != EOK) {
-                ROMIO_LOG(AD_LOG_LEVEL_ALL, "memcpy error! errcode:%d", ret);
-            }
+            memcpy(sbuf_ptr, buf + buf_idx[i], send_size[i]);
             buf_idx[i] += send_size[i];
         }
     } else {
@@ -1281,10 +1272,7 @@ static void ADIOI_W_Exchange_data_alltoallv(ADIO_File fd, const void *buf, char 
 #endif
             to_ptr = (char *)ADIOI_AINT_CAST_TO_VOID_PTR(others_req[i].mem_ptrs[start_pos[i] + j]);
             len = others_req[i].lens[start_pos[i] + j];
-            ret = memcpy_s(to_ptr, len, sbuf_ptr, len);
-            if (ret != EOK) {
-                ROMIO_LOG(AD_LOG_LEVEL_ALL, "memcpy error! errcode:%d", ret);
-            }
+            memcpy(to_ptr, sbuf_ptr, len);
             sbuf_ptr += len;
         }
 
